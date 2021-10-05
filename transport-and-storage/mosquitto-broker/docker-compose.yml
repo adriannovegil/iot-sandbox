@@ -1,0 +1,52 @@
+version: '3.8'
+
+services:
+  # Mosquitto - EU zone
+  mosquitto-broker-eu:
+     #image: eclipse-mosquitto:2.0.10
+    image: eclipse-mosquitto:1.6.9
+    #environment:
+    #  - MOSQUITTO_USERNAME=${MOSQUITTO_USERNAME}
+    #  - MOSQUITTO_PASSWORD=${MOSQUITTO_PASSWORD}
+    restart: always
+    #volumes:
+    #  - ./mosquitto-broker/mosquitto.conf:/mosquitto/config/mosquitto.conf
+    #  - ./mosquitto-broker/data:/mosquitto/data
+    #  - ./mosquitto-broker/log:/mosquitto/log
+    ports:
+      - 1883:1883
+      - 9001:9001
+    networks:
+      - iotsandbox
+      - observabilitysandbox
+    labels:
+      org.label-schema.group: "iot"
+
+  # Mosquitto - US zone
+  mosquitto-broker-us:
+     #image: eclipse-mosquitto:2.0.10
+    image: eclipse-mosquitto:1.6.9
+    #environment:
+    #  - MOSQUITTO_USERNAME=${MOSQUITTO_USERNAME}
+    #  - MOSQUITTO_PASSWORD=${MOSQUITTO_PASSWORD}
+    restart: always
+    #volumes:
+    #  - ./mosquitto-broker/mosquitto.conf:/mosquitto/config/mosquitto.conf
+    #  - ./mosquitto-broker/data:/mosquitto/data
+    #  - ./mosquitto-broker/log:/mosquitto/log
+    ports:
+      - 1884:1883
+      - 9002:9001
+    networks:
+      - iotsandbox
+      - observabilitysandbox
+    labels:
+      org.label-schema.group: "iot"
+
+networks:
+  iotsandbox:
+    name: iotsandbox
+    external: true
+  observabilitysandbox:
+    name: observabilitysandbox
+    external: true

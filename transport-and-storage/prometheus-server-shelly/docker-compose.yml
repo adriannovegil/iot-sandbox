@@ -1,0 +1,201 @@
+version: '3.8'
+
+services:
+  # Prometheus + sidecar - shelly sensors
+  prometheus-server-shelly-r1:
+    image: prom/prometheus:v2.26.0
+    volumes:
+      - ./prometheus-server/prometheus-r1.yml:/etc/prometheus/prometheus.yml
+      - prometheusservershellyr1_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.max-block-duration=30m'
+      - '--storage.tsdb.min-block-duration=30m'
+      - '--web.enable-lifecycle'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+    ports:
+      - 9091:9090
+    networks:
+      - observabilitysandbox
+    restart: always
+    labels:
+      org.label-schema.group: "observability"
+
+  thanos-sidecar-prometheus-shelly-r1:
+    image: quay.io/thanos/thanos:v0.18.0
+    volumes:
+      - ./thanos/:/etc/thanos/
+      - prometheusservershellyr1_data:/prometheus
+    command:
+      - 'sidecar'
+      - '--tsdb.path=/prometheus'
+      - '--prometheus.url=http://prometheus-server-shelly-r1:9090'
+      - '--grpc-address=0.0.0.0:10091'
+      - '--http-address=0.0.0.0:10902'
+      - '--objstore.config-file=/etc/thanos/bucket_config.yaml'
+    depends_on:
+      - prometheus-server-shelly-r1
+      - minio-shelly
+    networks:
+      - observabilitysandbox
+    restart: always
+    labels:
+      org.label-schema.group: "observability"
+
+  prometheus-server-shelly-r2:
+    image: prom/prometheus:v2.26.0
+    volumes:
+      - ./prometheus-server/prometheus-r2.yml:/etc/prometheus/prometheus.yml
+      - prometheusservershellyr2_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.max-block-duration=30m'
+      - '--storage.tsdb.min-block-duration=30m'
+      - '--web.enable-lifecycle'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+    ports:
+      - 9093:9090
+    networks:
+      - observabilitysandbox
+    restart: always
+    labels:
+      org.label-schema.group: "observability"
+
+  thanos-sidecar-prometheus-shelly-r2:
+    image: quay.io/thanos/thanos:v0.18.0
+    volumes:
+      - ./thanos/:/etc/thanos/
+      - prometheusservershellyr2_data:/prometheus
+    command:
+      - 'sidecar'
+      - '--tsdb.path=/prometheus'
+      - '--prometheus.url=http://prometheus-server-shelly-r2:9090'
+      - '--grpc-address=0.0.0.0:10091'
+      - '--http-address=0.0.0.0:10902'
+      - '--objstore.config-file=/etc/thanos/bucket_config.yaml'
+    depends_on:
+      - prometheus-server-shelly-r2
+      - minio-shelly
+    networks:
+      - observabilitysandbox
+    restart: always
+    labels:
+      org.label-schema.group: "observability"
+
+  # Thanos querier
+  thanos-querier-shelly:
+    image: quay.io/thanos/thanos:v0.18.0
+    command:
+      - 'query'
+      - '--grpc-address=0.0.0.0:10091'
+      - '--http-address=0.0.0.0:10902'
+      - '--query.replica-label=replica'
+      - '--store=thanos-sidecar-prometheus-shelly-r1:10091'
+      - '--store=thanos-sidecar-prometheus-shelly-r2:10091'
+      - '--store=thanos-store-gateway-shelly:10091'
+    ports:
+      - 10904:10902
+    depends_on:
+      - thanos-sidecar-prometheus-shelly-r1
+      - thanos-sidecar-prometheus-shelly-r2
+    networks:
+      - observabilitysandbox
+    restart: always
+    labels:
+      org.label-schema.group: "observability"
+
+  # Thanos store gateway
+  thanos-store-gateway-shelly:
+    image: quay.io/thanos/thanos:v0.18.0
+    volumes:
+      - ./thanos/:/etc/thanos/
+    command:
+      - 'store'
+      - '--grpc-address=0.0.0.0:10091'
+      - '--http-address=0.0.0.0:10902'
+      - '--data-dir=/tmp/thanos/store'
+      - '--objstore.config-file=/etc/thanos/bucket_config.yaml'
+    depends_on:
+      - minio-shelly
+    networks:
+      - observabilitysandbox
+    restart: always
+    labels:
+      org.label-schema.group: "observability"
+
+  # Thanos compactor
+  thanos-compactor-shelly:
+    image: quay.io/thanos/thanos:v0.18.0
+    volumes:
+      - ./thanos/:/etc/thanos/
+    command:
+      - 'compact'
+      - '--log.level=debug'
+      - '--data-dir=/data'
+      - '--objstore.config-file=/etc/thanos/bucket_config.yaml'
+      - '--wait'
+    depends_on:
+      - minio-shelly
+    networks:
+      - observabilitysandbox
+    restart: always
+    labels:
+      org.label-schema.group: "observability"
+
+  # Thanos bucket web
+  thanos-bucket-web-shelly:
+    image: quay.io/thanos/thanos:v0.18.0
+    volumes:
+      - ./thanos/:/etc/thanos/
+    command:
+      - 'tools'
+      - 'bucket'
+      - 'web'
+      - '--http-address=0.0.0.0:10902'
+      - '--log.level=debug'
+      - '--objstore.config-file=/etc/thanos/bucket_config.yaml'
+      - '--refresh=5m'
+      - '--timeout=2m'
+      - '--label=replica'
+    ports:
+      - 10922:10902
+    depends_on:
+      - minio-shelly
+    networks:
+      - observabilitysandbox
+    restart: always
+    labels:
+      org.label-schema.group: "observability"
+
+  # Minio storage
+  minio-shelly:
+    image: minio/minio:RELEASE.2020-05-01T22-19-14Z
+    volumes:
+      - minio_shelly_data:/data
+    entrypoint: sh
+    command: -c 'mkdir -p /data/shelly-bucket && /usr/bin/minio server /data'
+    environment:
+      - MINIO_ACCESS_KEY=smth
+      - MINIO_SECRET_KEY=Need8Chars
+      - MINIO_PROMETHEUS_AUTH_TYPE=public
+    ports:
+      - 9020:9000
+    networks:
+      - observabilitysandbox
+    restart: always
+    labels:
+      org.label-schema.group: "observability"
+
+volumes:
+  prometheusservershellyr1_data: {}
+  prometheusservershellyr2_data: {}
+  minio_shelly_data: {}
+
+networks:
+  observabilitysandbox:
+    name: observabilitysandbox
+    external: true

@@ -1,0 +1,29 @@
+version: '3.8'
+
+services:
+  # Load server EU
+  load-server-dht22-eu:
+    build: ./load-agent
+    image: mqtt2prometheus-dht22/load-agent-eu
+    environment:
+      - BROKER_URL=mosquitto-broker-eu
+    networks:
+      - iotsandbox
+    labels:
+      org.label-schema.group: "iot"
+
+  # Load server EU
+  load-server-dht22-us:
+    build: ./load-agent
+    image: mqtt2prometheus-dht22/load-agent-us
+    environment:
+      - BROKER_URL=mosquitto-broker-us
+    networks:
+      - iotsandbox
+    labels:
+      org.label-schema.group: "iot"
+
+networks:
+  iotsandbox:
+    name: iotsandbox
+    external: true

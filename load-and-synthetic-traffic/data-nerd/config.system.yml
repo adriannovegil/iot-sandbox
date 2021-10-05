@@ -1,0 +1,6 @@
+appname: data-nerd
+version: 0.0.1
+
+# Log level
+# panic, fatal, error, warn, info, debug, trace
+loglevel: info

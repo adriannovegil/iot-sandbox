@@ -1,0 +1,19 @@
+# Path of the file that describe the nodes
+nodes:
+  path: 'data/nodes.csv'  # Path of the nodes file
+  number: 5               # number of nodes that will be simulated
+  identifier: 'City'      # Unique identifier for each node
+#
+measurments:
+  - name: 'humidity'
+    path: 'data/humidity.csv'
+  - name: 'pressure'
+    path: 'data/pressure.csv'
+
+messaging:
+  period: 1000
+  periodDeviation: 100 # Standard deviation of the period
+  skipProbability: 0 # probability of skiping a message
+
+mqtt:
+  broker: tcp://localhost:1337

@@ -1,0 +1,29 @@
+version: '3.8'
+
+services:
+  # Load server
+  load-agent-shelly-eu:
+    build: ./load-agent
+    image: mqtt2prometheus-shelly/load-agent-eu
+    environment:
+      - BROKER_URL=mosquitto-broker-eu
+    networks:
+      - iotsandbox
+    labels:
+      org.label-schema.group: "iot"
+
+  # Load server
+  load-agent-shelly-us:
+    build: ./load-agent
+    image: mqtt2prometheus-shelly/load-agent-us
+    environment:
+      - BROKER_URL=mosquitto-broker-us
+    networks:
+      - iotsandbox
+    labels:
+      org.label-schema.group: "iot"
+
+networks:
+  iotsandbox:
+    name: iotsandbox
+    external: true

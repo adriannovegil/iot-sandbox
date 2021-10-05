@@ -1,0 +1,50 @@
+version: '3.8'
+
+services:
+  # MQTT 2 Prometheus shelly - EU zone
+  mqtt-2-prometheus-shelly-eu:
+    image: hikhvar/mqtt2prometheus:latest
+    restart: always
+    command:
+      - /mqtt2prometheus
+      - -log-level
+      - debug
+      - -config
+      - /config.yaml
+    volumes:
+      - ./mqtt-2-prometheus-eu/config.yaml:/config.yaml
+    ports:
+      - 9643:9641
+    networks:
+      - iotsandbox
+      - observabilitysandbox
+    labels:
+      org.label-schema.group: "iot"
+
+  # MQTT 2 Prometheus shelly - US zone
+  mqtt-2-prometheus-shelly-us:
+    image: hikhvar/mqtt2prometheus:latest
+    restart: always
+    command:
+      - /mqtt2prometheus
+      - -log-level
+      - debug
+      - -config
+      - /config.yaml
+    volumes:
+      - ./mqtt-2-prometheus-us/config.yaml:/config.yaml
+    ports:
+      - 9644:9641
+    networks:
+      - iotsandbox
+      - observabilitysandbox
+    labels:
+      org.label-schema.group: "iot"
+      
+networks:
+  iotsandbox:
+    name: iotsandbox
+    external: true
+  observabilitysandbox:
+    name: observabilitysandbox
+    external: true

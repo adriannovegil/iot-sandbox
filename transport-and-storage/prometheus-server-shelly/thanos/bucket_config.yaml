@@ -1,0 +1,7 @@
+type: S3
+config:
+  bucket: shelly-bucket
+  access_key: smth
+  secret_key: Need8Chars
+  endpoint: minio-shelly:9000
+  insecure: true
