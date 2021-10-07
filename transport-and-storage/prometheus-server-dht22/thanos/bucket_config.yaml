@@ -1,7 +1,0 @@
-type: S3
-config:
-  bucket: dht22-bucket
-  access_key: smth
-  secret_key: Need8Chars
-  endpoint: minio-dht22:9000
-  insecure: true

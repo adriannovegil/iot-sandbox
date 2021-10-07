@@ -1,6 +1,0 @@
-appname: influxdb-protector
-version: 0.7.0
-
-# Log level
-# panic, fatal, error, warn, info, debug, trace
-loglevel: info
